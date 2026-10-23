@@ -1,0 +1,45 @@
+name: Build SAROO Saturn firmware
+
+on:
+  push:
+    branches:
+      - feature/remember-last-game
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-saturn-firmware:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install SuperH toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-sh-elf binutils-sh-elf
+
+      - name: Verify toolchain
+        run: |
+          sh-elf-gcc --version
+          sh-elf-as --version
+          sh-elf-objcopy --version
+
+      - name: Build Saturn firmware
+        working-directory: Firm_Saturn
+        run: |
+          make clean
+          make
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: saroo-ssfirm-${{ github.sha }}
+          path: |
+            Firm_Saturn/ssfirm.bin
+            Firm_Saturn/ssfirm.elf
+            Firm_Saturn/dump.txt
+          if-no-files-found: error
+          retention-days: 30
