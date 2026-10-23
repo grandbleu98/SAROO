@@ -647,6 +647,61 @@ static void fill_selmenu(void)
 }
 
 
+/*
+ * Remember the last game by its full path, not by its list index.
+ * The list may be reordered between boots.
+ */
+#define LAST_GAME_FILE "/SAROO/last_game.dat"
+
+static void save_last_game(int index)
+{
+	int *disc_path;
+	char *path_str;
+	char *path;
+	int len;
+
+	if(sel_mode != 0 || index < 0 || index >= total_disc)
+		return;
+
+	disc_path = (int *)(IMGINFO_ADDR+0x04);
+	path_str = (char *)(IMGINFO_ADDR);
+	path = path_str + LE32(&disc_path[index]);
+	len = strlen(path) + 1;
+	if(len > 128)
+		return;
+
+	write_file(LAST_GAME_FILE, -1, len, path);
+}
+
+static int load_last_game_index(void)
+{
+	int *disc_path = (int *)(IMGINFO_ADDR+0x04);
+	char *path_str = (char *)(IMGINFO_ADDR);
+	char saved_path[128];
+	int len;
+	int i;
+
+	if(sel_mode != 0 || total_disc <= 0)
+		return -1;
+
+	memset(saved_path, 0, sizeof(saved_path));
+	len = read_file(LAST_GAME_FILE, 0, sizeof(saved_path)-1, saved_path);
+	if(len <= 0)
+		return -1;
+	saved_path[sizeof(saved_path)-1] = 0;
+	if(saved_path[0] == 0)
+		return -1;
+
+	for(i=0; i<total_disc; i++){
+		char *path = path_str + LE32(&disc_path[i]);
+		if(strcmp(path, saved_path)==0)
+			return i;
+	}
+
+	return -1;
+}
+
+
 static void select_notify(int index)
 {
 	if(sel_mode==0){
@@ -753,6 +808,7 @@ static int sel_handle(int ctrl)
 		int retv;
 
 		if(sel_mode==0){
+			save_last_game(index);
 			menu_status(menu, TT("游戏启动中......"));
 
 			SS_ARG = index;
@@ -784,6 +840,7 @@ static int sel_handle(int ctrl)
 		if(sel_mode==0){
 			int index = page*MENU_ITEMS + menu->current;
 
+			save_last_game(index);
 			SS_ARG = index;
 			SS_CMD = SSCMD_LOADDISC;
 			while(SS_CMD);
@@ -813,6 +870,8 @@ static int sel_handle(int ctrl)
 
 void select_game(void)
 {
+	int last_index = -1;
+
 	total_disc = LE32((u8*)(IMGINFO_ADDR));
 	total_page = (total_disc+MENU_ITEMS-1)/MENU_ITEMS;
 	page = 0;
@@ -820,7 +879,18 @@ void select_game(void)
 	memset(&sel_menu, 0, sizeof(sel_menu));
 	sel_menu.handle = sel_handle;
 
+	if(sel_mode==0){
+		last_index = load_last_game_index();
+		if(last_index >= 0){
+			page = last_index / MENU_ITEMS;
+		}
+	}
+
 	fill_selmenu();
+
+	if(last_index >= 0){
+		sel_menu.current = last_index % MENU_ITEMS;
+	}
 	select_notify(sel_menu.current | SELECT_ENTER);
 
 	menu_run(&sel_menu);
