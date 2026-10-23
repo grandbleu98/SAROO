@@ -635,7 +635,7 @@ static void fill_selmenu(void)
 			if(p) *p = 0;
 		}
 
-			add_menu_item(&sel_menu, tmp);
+		add_menu_item(&sel_menu, tmp);
 	}
 
 	int disp_page = (total_page)? page+1 : 0;
