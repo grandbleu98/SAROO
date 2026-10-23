@@ -870,6 +870,8 @@ static int sel_handle(int ctrl)
 
 void select_game(void)
 {
+	int last_index = -1;
+
 	total_disc = LE32((u8*)(IMGINFO_ADDR));
 	total_page = (total_disc+MENU_ITEMS-1)/MENU_ITEMS;
 	page = 0;
@@ -878,7 +880,7 @@ void select_game(void)
 	sel_menu.handle = sel_handle;
 
 	if(sel_mode==0){
-		int last_index = load_last_game_index();
+		last_index = load_last_game_index();
 		if(last_index >= 0){
 			page = last_index / MENU_ITEMS;
 		}
@@ -886,11 +888,8 @@ void select_game(void)
 
 	fill_selmenu();
 
-	if(sel_mode==0){
-		int last_index = load_last_game_index();
-		if(last_index >= 0){
-			sel_menu.current = last_index % MENU_ITEMS;
-		}
+	if(last_index >= 0){
+		sel_menu.current = last_index % MENU_ITEMS;
 	}
 	select_notify(sel_menu.current | SELECT_ENTER);
 
