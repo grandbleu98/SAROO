@@ -213,6 +213,8 @@ static int map_expand(CHD_CTX *ctx, const uint8_t *mapdata,
         }
         raw[i * CHD_MAP_ENTRY_SIZE] = type;
     }
+    if (repcount != 0)
+        goto map_error;
 
     /* Decode lengths, offsets and CRCs into the expanded 12-byte map. */
     for (i = 0; i < ctx->hunk_count; i++) {
