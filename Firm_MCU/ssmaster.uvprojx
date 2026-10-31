@@ -630,6 +630,11 @@
               <FilePath>.\Saturn\cdimg.c</FilePath>
             </File>
             <File>
+              <FileName>chd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Saturn\chd.c</FilePath>
+            </File>
+            <File>
               <FileName>cdda_i2s.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Saturn\cdda_i2s.c</FilePath>
